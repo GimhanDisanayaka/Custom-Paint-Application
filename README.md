@@ -6,6 +6,8 @@ Instead of relying on Java's built-in high-level shape drawing functions (like g
 
 ---
 
+![App Preview](paint-app.gif)
+
 ## 🚀 Key Features & Core Implementation
 
 * *Free-Hand Line Drawing:* Uses a custom *DDA (Digital Differential Analyzer) Algorithm* to calculate intermediate pixel positions smoothly as the mouse drags.
