@@ -82,6 +82,15 @@ public class DDAPaintGIMAVERES extends JPanel {
         int dy = y2 - y1;
         int steps = Math.max(Math.abs(dx), Math.abs(dy));
 
+        // A click without movement is a valid single-point stroke. Avoid
+        // dividing by zero and still colour that point on the canvas.
+        if (steps == 0) {
+            if (x1 >= 0 && x1 < canvas.getWidth() && y1 >= 0 && y1 < canvas.getHeight()) {
+                canvas.setRGB(x1, y1, color.getRGB());
+            }
+            return;
+        }
+
         float xIncrement = (float) dx / steps;
         float yIncrement = (float) dy / steps;
 
@@ -99,31 +108,47 @@ public class DDAPaintGIMAVERES extends JPanel {
 
     
     private void drawDDASquare(int x1, int y1, int x2, int y2) {
-       
-        runDDA(x1, y1, x2, y1, Color.GREEN); 
-        runDDA(x2, y1, x2, y2, Color.GREEN); 
-        runDDA(x2, y2, x1, y2, Color.GREEN); 
-        runDDA(x1, y2, x1, y1, Color.GREEN); 
+        int side = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
+        int endX = x1 + (x2 >= x1 ? side : -side);
+        int endY = y1 + (y2 >= y1 ? side : -side);
+
+        runDDA(x1, y1, endX, y1, Color.GREEN);
+        runDDA(endX, y1, endX, endY, Color.GREEN);
+        runDDA(endX, endY, x1, endY, Color.GREEN);
+        runDDA(x1, endY, x1, y1, Color.GREEN);
     }
 
    
     private void drawDDACircle(int x1, int y1, int x2, int y2) {
-      
-        int radius = (int) Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-        
-     
-        int prevX = x1 + radius;
-        int prevY = y1;
+        int radius = (int) Math.round(Math.hypot(x2 - x1, y2 - y1));
+        int x = 0;
+        int y = radius;
+        int decision = 1 - radius;
 
-        for (int angle = 1; angle <= 360; angle++) {
-            double rad = Math.toRadians(angle);
-            int nextX = (int) (x1 + radius * Math.cos(rad));
-            int nextY = (int) (y1 + radius * Math.sin(rad));
+        while (x <= y) {
+            plotCirclePoints(x1, y1, x, y, Color.ORANGE);
+            x++;
+            if (decision < 0) {
+                decision += 2 * x + 1;
+            } else {
+                y--;
+                decision += 2 * (x - y) + 1;
+            }
+        }
+    }
 
-            runDDA(prevX, prevY, nextX, nextY, Color.ORANGE);
-            
-            prevX = nextX;
-            prevY = nextY;
+    private void plotCirclePoints(int centerX, int centerY, int x, int y, Color color) {
+        int[][] points = {
+            {centerX + x, centerY + y}, {centerX - x, centerY + y},
+            {centerX + x, centerY - y}, {centerX - x, centerY - y},
+            {centerX + y, centerY + x}, {centerX - y, centerY + x},
+            {centerX + y, centerY - x}, {centerX - y, centerY - x}
+        };
+        for (int[] point : points) {
+            if (point[0] >= 0 && point[0] < canvas.getWidth()
+                    && point[1] >= 0 && point[1] < canvas.getHeight()) {
+                canvas.setRGB(point[0], point[1], color.getRGB());
+            }
         }
     }
 
